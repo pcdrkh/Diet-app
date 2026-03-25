@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Diet Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --orange: #ff6b2b;
+    --orange-light: #ff8c5a;
+    --orange-dim: rgba(255,107,43,0.12);
+    --text: #f0ece6;
+    --muted: #888;
+    --green: #4ade80;
+    --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+/* App shell */
+.app { display: flex; flex-direction: column; min-height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; }
+
+/* Header */
+.header {
+padding: 54px 24px 16px;
+background: linear-gradient(180deg, rgba(255,107,43,0.08) 0%, transparent 100%);
+border-bottom: 1px solid var(–border);
+}
+.header-title { font-family: ‘DM Serif Display’, serif; font-size: 28px; letter-spacing: -0.5px; }
+.header-title span { color: var(–orange); font-style: italic; }
+.header-sub { font-size: 12px; color: var(–muted); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* Tabs */
+.tabs {
+display: flex;
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+overflow-x: auto;
+scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+flex: 1; min-width: 80px;
+padding: 12px 8px;
+text-align: center;
+font-size: 11px;
+font-weight: 500;
+color: var(–muted);
+cursor: pointer;
+border-bottom: 2px solid transparent;
+transition: all 0.2s;
+white-space: nowrap;
+letter-spacing: 0.3px;
+}
+.tab.active { color: var(–orange); border-color: var(–orange); }
+.tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+/* Pages */
+.page { display: none; flex: 1; overflow-y: auto; padding: 20px 20px 100px; }
+.page.active { display: block; }
+
+/* Cards */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 20px;
+margin-bottom: 16px;
+}
+.card-label { font-size: 11px; color: var(–muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.card-big { font-family: ‘DM Serif Display’, serif; font-size: 42px; letter-spacing: -1px; line-height: 1; }
+.card-unit { font-size: 16px; color: var(–muted); font-family: ‘DM Sans’, sans-serif; font-weight: 300; }
+.card-diff { font-size: 13px; margin-top: 6px; font-weight: 500; }
+.card-diff.up { color: var(–red); }
+.card-diff.down { color: var(–green); }
+.card-diff.same { color: var(–muted); }
+
+/* Grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.mini-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 16px;
+}
+.mini-val { font-family: ‘DM Serif Display’, serif; font-size: 28px; letter-spacing: -0.5px; }
+.mini-label { font-size: 11px; color: var(–muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Chart */
+.chart-wrap {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 20px;
+margin-bottom: 16px;
+}
+.chart-title { font-size: 12px; color: var(–muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+canvas { width: 100% !important; border-radius: 8px; }
+
+/* Form */
+.form-section { margin-bottom: 24px; }
+.form-section-title {
+font-size: 11px; color: var(–orange); text-transform: uppercase;
+letter-spacing: 1px; font-weight: 600; margin-bottom: 12px;
+display: flex; align-items: center; gap: 6px;
+}
+.form-row { margin-bottom: 12px; }
+label { display: block; font-size: 12px; color: var(–muted); margin-bottom: 5px; letter-spacing: 0.3px; }
+input[type=text], input[type=number], input[type=date], select {
+width: 100%;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 12px 14px;
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 15px;
+outline: none;
+transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: var(–orange); }
+select option { background: var(–surface2); }
+
+/* Enum buttons */
+.enum-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.enum-btn {
+padding: 8px 16px;
+border-radius: 8px;
+border: 1px solid var(–border);
+background: var(–surface2);
+color: var(–muted);
+font-size: 13px;
+font-family: ‘DM Sans’, sans-serif;
+cursor: pointer;
+transition: all 0.15s;
+}
+.enum-btn.active { border-color: var(–orange); background: var(–orange-dim); color: var(–orange); font-weight: 500; }
+
+/* Submit */
+.btn-submit {
+width: 100%;
+padding: 16px;
+background: var(–orange);
+color: #fff;
+border: none;
+border-radius: 14px;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 16px;
+font-weight: 600;
+cursor: pointer;
+letter-spacing: 0.3px;
+transition: opacity 0.2s, transform 0.1s;
+margin-top: 8px;
+}
+.btn-submit:active { opacity: 0.85; transform: scale(0.98); }
+
+/* Toast */
+.toast {
+position: fixed;
+bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+background: var(–green);
+color: #000;
+padding: 10px 22px;
+border-radius: 20px;
+font-size: 13px;
+font-weight: 600;
+opacity: 0;
+transition: all 0.3s;
+z-index: 999;
+white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Records list */
+.rec-item {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 14px 16px;
+margin-bottom: 10px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.rec-date { font-size: 13px; color: var(–muted); }
+.rec-weight { font-family: ‘DM Serif Display’, serif; font-size: 24px; }
+.rec-kg { font-size: 12px; color: var(–muted); font-family: ‘DM Sans’, sans-serif; }
+.rec-meta { font-size: 12px; color: var(–muted); margin-top: 2px; }
+.rec-diff-badge {
+font-size: 11px; font-weight: 600;
+padding: 3px 8px; border-radius: 20px;
+}
+.badge-down { background: rgba(74,222,128,0.15); color: var(–green); }
+.badge-up { background: rgba(248,113,113,0.15); color: var(–red); }
+.badge-same { background: var(–surface2); color: var(–muted); }
+
+/* Streak */
+.streak-bar { display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; }
+.streak-dot {
+width: 28px; height: 28px; border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+font-size: 10px; font-weight: 600;
+}
+.streak-dot.filled { background: var(–orange); color: #fff; }
+.streak-dot.empty { background: var(–surface2); color: var(–muted); border: 1px solid var(–border); }
+
+/* Empty state */
+.empty { text-align: center; padding: 60px 20px; color: var(–muted); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+
+/* Bottom nav */
+.bottom-nav {
+position: fixed;
+bottom: 0; left: 50%; transform: translateX(-50%);
+width: 100%; max-width: 430px;
+background: rgba(26,26,26,0.96);
+backdrop-filter: blur(12px);
+border-top: 1px solid var(–border);
+display: flex;
+z-index: 100;
+padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-btn {
+flex: 1; padding: 10px 0;
+text-align: center;
+cursor: pointer;
+transition: all 0.15s;
+}
+.nav-btn-icon { font-size: 22px; display: block; }
+.nav-btn-label { font-size: 10px; color: var(–muted); display: block; margin-top: 2px; letter-spacing: 0.3px; }
+.nav-btn.active .nav-btn-icon { filter: none; }
+.nav-btn.active .nav-btn-label { color: var(–orange); }
+
+/* Section title */
+.section-title { font-family: ‘DM Serif Display’, serif; font-size: 20px; margin-bottom: 16px; letter-spacing: -0.3px; }
+
+/* Calorie bar */
+.cal-bar-bg { height: 6px; background: var(–surface2); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.cal-bar-fill { height: 100%; background: var(–orange); border-radius: 3px; transition: width 0.5s; }
+
+.divider { height: 1px; background: var(–border); margin: 16px 0; }
+
+input[type=date]::-webkit-calendar-picker-indicator {
+filter: invert(0.6);
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-title">Diet <span>Tracker</span></div>
+    <div class="header-sub">あなたの記録、毎日積み上げる</div>
+  </div>
+
+  <!-- Pages -->
+
+  <div id="page-home" class="page active">
+    <p class="section-title">今日のサマリー</p>
+    <div id="home-content"></div>
+  </div>
+
+  <div id="page-input" class="page">
+    <p class="section-title">記録する</p>
+    <div class="form-section">
+      <div class="form-section-title">📅 基本情報</div>
+      <div class="form-row">
+        <label>日付</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-row">
+        <label>体重 (kg)</label>
+        <input type="number" id="f-weight" step="0.1" placeholder="例: 65.4">
+      </div>
+      <div class="form-row">
+        <label>体脂肪率 (%)</label>
+        <input type="number" id="f-fat" step="0.1" placeholder="例: 22.5">
+      </div>
+      <div class="form-row">
+        <label>歩数</label>
+        <input type="number" id="f-steps" placeholder="例: 8000">
+      </div>
+    </div>
+
+```
+<div class="form-section">
+  <div class="form-section-title">🏃 運動</div>
+  <div class="enum-group" id="f-exercise-group">
+    <button class="enum-btn" onclick="selectEnum('exercise','強',this)">強</button>
+    <button class="enum-btn" onclick="selectEnum('exercise','中',this)">中</button>
+    <button class="enum-btn" onclick="selectEnum('exercise','低',this)">低</button>
+    <button class="enum-btn active" onclick="selectEnum('exercise','無',this)">無</button>
+  </div>
+</div>
+
+<div class="form-section">
+  <div class="form-section-title">🍽️ 食事</div>
+  <div class="form-row">
+    <label>朝食</label>
+    <input type="text" id="f-breakfast" placeholder="例: 納豆ごはん">
+  </div>
+  <div class="form-row">
+    <label>朝食カロリー (kcal)</label>
+    <input type="number" id="f-breakfast-cal" placeholder="例: 350">
+  </div>
+  <div class="form-row">
+    <label>昼食</label>
+    <input type="text" id="f-lunch" placeholder="例: サラダチキン定食">
+  </div>
+  <div class="form-row">
+    <label>昼食カロリー (kcal)</label>
+    <input type="number" id="f-lunch-cal" placeholder="例: 600">
+  </div>
+  <div class="form-row">
+    <label>夕食</label>
+    <input type="text" id="f-dinner" placeholder="例: 焼き魚定食">
+  </div>
+  <div class="form-row">
+    <label>夕食カロリー (kcal)</label>
+    <input type="number" id="f-dinner-cal" placeholder="例: 550">
+  </div>
+</div>
+
+<div class="form-section">
+  <div class="form-section-title">⭐ 食事評価</div>
+  <div class="enum-group" id="f-eval-group">
+    <button class="enum-btn" onclick="selectEnum('eval','◎',this)">◎ 最高</button>
+    <button class="enum-btn active" onclick="selectEnum('eval','○',this)">○ 良い</button>
+    <button class="enum-btn" onclick="selectEnum('eval','△',this)">△ 普通</button>
+    <button class="enum-btn" onclick="selectEnum('eval','×',this)">× 悪い</button>
+  </div>
+</div>
+
+<button class="btn-submit" onclick="saveRecord()">💾 記録を保存</button>
+```
+
+  </div>
+
+  <div id="page-graph" class="page">
+    <p class="section-title">体重グラフ</p>
+    <div class="chart-wrap">
+      <div class="chart-title">📈 体重推移 (kg)</div>
+      <canvas id="weightChart" height="200"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">🔥 カロリー推移 (kcal)</div>
+      <canvas id="calChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <div id="page-records" class="page">
+    <p class="section-title">記録一覧</p>
+    <div id="records-list"></div>
+  </div>
+
+  <!-- Bottom nav -->
+
+  <div class="bottom-nav">
+    <div class="nav-btn active" onclick="switchPage('home',this)">
+      <span class="nav-btn-icon">🏠</span>
+      <span class="nav-btn-label">ホーム</span>
+    </div>
+    <div class="nav-btn" onclick="switchPage('input',this)">
+      <span class="nav-btn-icon">✏️</span>
+      <span class="nav-btn-label">入力</span>
+    </div>
+    <div class="nav-btn" onclick="switchPage('graph',this)">
+      <span class="nav-btn-icon">📈</span>
+      <span class="nav-btn-label">グラフ</span>
+    </div>
+    <div class="nav-btn" onclick="switchPage('records',this)">
+      <span class="nav-btn-icon">📋</span>
+      <span class="nav-btn-label">記録</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ 保存しました！</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+// ---- State ----
+const STORAGE_KEY = 'diet_tracker_records';
+let records = [];
+let enumValues = { exercise: '無', eval: '○' };
+
+// ---- Init ----
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) records = JSON.parse(saved);
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = today;
+  renderHome();
+}
+
+// ---- Page switch ----
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'graph') renderCharts();
+  if (name === 'records') renderRecords();
+  if (name === 'home') renderHome();
+}
+
+// ---- Enum select ----
+function selectEnum(type, val, btn) {
+  enumValues[type] = val;
+  const groupId = type === 'exercise' ? 'f-exercise-group' : 'f-eval-group';
+  document.querySelectorAll('#' + groupId + ' .enum-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ---- Save ----
+function saveRecord() {
+  const date = document.getElementById('f-date').value;
+  const weight = parseFloat(document.getElementById('f-weight').value);
+  if (!date || isNaN(weight)) {
+    showToast('⚠️ 日付と体重は必須です', '#f87171');
+    return;
+  }
+  const rec = {
+    id: Date.now().toString(),
+    date,
+    weight,
+    fat: parseFloat(document.getElementById('f-fat').value) || null,
+    steps: parseInt(document.getElementById('f-steps').value) || null,
+    exercise: enumValues.exercise,
+    breakfast: document.getElementById('f-breakfast').value,
+    breakfastCal: parseInt(document.getElementById('f-breakfast-cal').value) || 0,
+    lunch: document.getElementById('f-lunch').value,
+    lunchCal: parseInt(document.getElementById('f-lunch-cal').value) || 0,
+    dinner: document.getElementById('f-dinner').value,
+    dinnerCal: parseInt(document.getElementById('f-dinner-cal').value) || 0,
+    eval: enumValues.eval,
+  };
+  // Remove existing record for same date
+  records = records.filter(r => r.date !== date);
+  records.push(rec);
+  records.sort((a,b) => a.date.localeCompare(b.date));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  showToast('✅ 保存しました！', '#4ade80');
+  clearForm();
+}
+
+function clearForm() {
+  ['f-weight','f-fat','f-steps','f-breakfast','f-breakfast-cal','f-lunch','f-lunch-cal','f-dinner','f-dinner-cal'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+// ---- Toast ----
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || '#4ade80';
+  t.style.color = color === '#4ade80' ? '#000' : '#fff';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ---- Home ----
+function renderHome() {
+  const el = document.getElementById('home-content');
+  if (records.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">まだ記録がありません<br>✏️ 入力から記録を追加しよう</div></div>`;
+    return;
+  }
+  const latest = records[records.length - 1];
+  const prev = records.length > 1 ? records[records.length - 2] : null;
+  const first = records[0];
+  const diff = prev ? (latest.weight - prev.weight).toFixed(1) : null;
+  const total = (latest.weight - first.weight).toFixed(1);
+  const totalCal = latest.breakfastCal + latest.lunchCal + latest.dinnerCal;
+  const targetCal = 1800;
+  const calPct = Math.min(100, Math.round(totalCal / targetCal * 100));
+
+  let diffHtml = '';
+  if (diff !== null) {
+    const cls = diff < 0 ? 'down' : diff > 0 ? 'up' : 'same';
+    const sign = diff > 0 ? '+' : '';
+    diffHtml = `<div class="card-diff ${cls}">${sign}${diff} kg（前日比）</div>`;
+  }
+
+  const totalCls = total < 0 ? 'down' : total > 0 ? 'up' : 'same';
+  const totalSign = total > 0 ? '+' : '';
+
+  // Streak: how many consecutive days from latest
+  let streak = 0;
+  let checkDate = new Date(latest.date);
+  for (let i = records.length - 1; i >= 0; i--) {
+    const rd = new Date(records[i].date);
+    const diff2 = Math.round((checkDate - rd) / 86400000);
+    if (diff2 === 0) { streak++; checkDate.setDate(checkDate.getDate() - 1); }
+    else break;
+  }
+
+  // Last 7 days dots
+  let dotHtml = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const has = records.some(r => r.date === ds);
+    const label = ['日','月','火','水','木','金','土'][d.getDay()];
+    dotHtml += `<div class="streak-dot ${has ? 'filled' : 'empty'}">${label}</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-label">最新の体重</div>
+      <div class="card-big">${latest.weight}<span class="card-unit"> kg</span></div>
+      ${diffHtml}
+      <div class="card-diff ${totalCls}" style="margin-top:4px; font-size:12px;">累計 ${totalSign}${total} kg（${first.date}〜）</div>
+    </div>
+    <div class="grid2">
+      <div class="mini-card">
+        <div class="mini-val">${latest.fat ? latest.fat + '%' : '—'}</div>
+        <div class="mini-label">体脂肪率</div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-val">${latest.steps ? (latest.steps >= 1000 ? (latest.steps/1000).toFixed(1)+'k' : latest.steps) : '—'}</div>
+        <div class="mini-label">歩数</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">本日のカロリー</div>
+      <div class="card-big">${totalCal}<span class="card-unit"> kcal</span></div>
+      <div class="cal-bar-bg"><div class="cal-bar-fill" style="width:${calPct}%"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">目標 ${targetCal} kcal に対して ${calPct}%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">記録ストリーク（直近7日）</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;">${streak} <span style="font-family:'DM Sans';font-size:14px;color:var(--muted);">日連続</span></div>
+      <div class="streak-bar">${dotHtml}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">最新の食事</div>
+      ${latest.breakfast ? `<div style="font-size:13px;margin-bottom:4px;">🌅 ${latest.breakfast} <span style="color:var(--muted)">${latest.breakfastCal}kcal</span></div>` : ''}
+      ${latest.lunch ? `<div style="font-size:13px;margin-bottom:4px;">☀️ ${latest.lunch} <span style="color:var(--muted)">${latest.lunchCal}kcal</span></div>` : ''}
+      ${latest.dinner ? `<div style="font-size:13px;margin-bottom:4px;">🌙 ${latest.dinner} <span style="color:var(--muted)">${latest.dinnerCal}kcal</span></div>` : ''}
+      ${!latest.breakfast && !latest.lunch && !latest.dinner ? '<div style="font-size:13px;color:var(--muted);">食事記録なし</div>' : ''}
+      <div class="divider"></div>
+      <div style="font-size:12px;color:var(--muted);">食事評価: <span style="color:var(--orange);font-weight:600;">${latest.eval}</span>　運動: <span style="color:var(--orange-light)">${latest.exercise}</span></div>
+    </div>
+  `;
+}
+
+// ---- Charts ----
+let chartInstances = {};
+function renderCharts() {
+  if (records.length === 0) {
+    ['weightChart','calChart'].forEach(id => {
+      const ctx = document.getElementById(id);
+      ctx.parentElement.innerHTML += '';
+    });
+    return;
+  }
+  const last = records.slice(-14);
+  const labels = last.map(r => r.date.slice(5)); // MM-DD
+  const weights = last.map(r => r.weight);
+  const cals = last.map(r => r.breakfastCal + r.lunchCal + r.dinnerCal);
+
+  drawChart('weightChart', labels, weights, 'kg', '#ff6b2b', 'rgba(255,107,43,0.15)');
+  drawChart('calChart', labels, cals, 'kcal', '#ff8c5a', 'rgba(255,140,90,0.1)');
+}
+
+function drawChart(id, labels, data, unit, color, fill) {
+  if (chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  chartInstances[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: color,
+        backgroundColor: fill,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: color,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ctx.parsed.y + ' ' + unit }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#888', font: { size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#888', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+// ---- Records list ----
+function renderRecords() {
+  const el = document.getElementById('records-list');
+  if (records.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">記録がありません</div></div>`;
+    return;
+  }
+  const sorted = [...records].reverse();
+  el.innerHTML = sorted.map((r, i) => {
+    const prev = sorted[i + 1];
+    const diff = prev ? (r.weight - prev.weight).toFixed(1) : null;
+    let badge = '';
+    if (diff !== null) {
+      const cls = diff < 0 ? 'badge-down' : diff > 0 ? 'badge-up' : 'badge-same';
+      const sign = diff > 0 ? '+' : '';
+      badge = `<span class="rec-diff-badge ${cls}">${sign}${diff}</span>`;
+    }
+    const totalCal = r.breakfastCal + r.lunchCal + r.dinnerCal;
+    return `
+      <div class="rec-item">
+        <div>
+          <div class="rec-date">${r.date} ${badge}</div>
+          <div class="rec-weight">${r.weight}<span class="rec-kg"> kg</span></div>
+          <div class="rec-meta">${r.fat ? '体脂肪 '+r.fat+'%　' : ''}${r.steps ? r.steps+'歩　' : ''}${totalCal ? totalCal+'kcal　' : ''}${r.exercise !== '無' ? '運動:'+r.exercise : ''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px">${r.eval}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${r.eval === '◎' ? '最高' : r.eval === '○' ? '良い' : r.eval === '△' ? '普通' : '悪い'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+init();
+</script>
+
+</body>
+</html>
